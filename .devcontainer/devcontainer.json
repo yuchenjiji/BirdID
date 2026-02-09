@@ -1,0 +1,12 @@
+{
+	"name": "Flutter",
+	"image": "ghcr.io/mullner/devcontainer-flutter:master",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"dart-code.flutter"
+			]
+		}
+	},
+	"remoteUser": "vscode"
+}
