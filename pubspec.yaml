@@ -1,0 +1,39 @@
+name: myapp
+description: A new Flutter project.
+publish_to: 'none' 
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 你的第三方库
+  dio: ^5.9.1
+  file_picker: ^10.3.10
+  dynamic_color: ^1.8.1
+  permission_handler: ^12.0.1
+  device_info_plus: ^12.3.0
+  intl: ^0.20.2
+
+  # 图标库（Flutter 自带）
+  cupertino_icons: ^1.0.6
+  record: ^6.2.0
+  path_provider: ^2.1.5
+  shared_preferences: ^2.5.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/logo.png"
