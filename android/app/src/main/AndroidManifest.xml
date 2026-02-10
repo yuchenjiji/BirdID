@@ -1,4 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 必须：网络权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 录音权限 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    
+    <!-- 必须：Android 13+ (SDK 33) 读取音频权限 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    
+    <!-- 必须：Android 12及以下 读取存储权限 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application
         android:label="myapp"
         android:name="${applicationName}"

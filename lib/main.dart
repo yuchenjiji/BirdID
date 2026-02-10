@@ -1,8 +1,9 @@
-import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
@@ -91,12 +92,24 @@ class BirdAppData extends ChangeNotifier {
 
     // 2. 如果本地没 ID（说明是第一次运行或刚清除了数据），尝试获取硬件 ID
     if (_uid == null) {
-      if (Platform.isAndroid) {
-        final deviceInfo = DeviceInfoPlugin();
-        final androidInfo = await deviceInfo.androidInfo;
-        _uid = "bird_${androidInfo.id}"; // 使用安卓系统唯一 ID
+      if (kIsWeb) {
+        // Web 平台：使用时间戳生成唯一 ID
+        _uid = "web_${DateTime.now().millisecondsSinceEpoch}";
       } else {
-        _uid = "u_${DateTime.now().millisecondsSinceEpoch}";
+        try {
+          final deviceInfo = DeviceInfoPlugin();
+          if (Platform.isAndroid) {
+            final androidInfo = await deviceInfo.androidInfo;
+            _uid = "bird_${androidInfo.id}"; // 使用安卓系统唯一 ID
+          } else if (Platform.isIOS) {
+            final iosInfo = await deviceInfo.iosInfo;
+            _uid = "bird_${iosInfo.identifierForVendor}";
+          } else {
+            _uid = "u_${DateTime.now().millisecondsSinceEpoch}";
+          }
+        } catch (e) {
+          _uid = "u_${DateTime.now().millisecondsSinceEpoch}";
+        }
       }
       await prefs.setString('user_id', _uid!);
     }
@@ -242,27 +255,7 @@ class ApiService {
 
       onProgress("AI Analyzing...");
 
-      // 【核心修正】：针对你的日志结构解析
-      // 1. 获取最外层的 Map
-      final Map<String, dynamic> responseData =
-          response.data is Map ? response.data : {};
-      // 2. 提取 'results' 列表
-      final List resultsList = responseData['results'] ?? [];
-
-      DebugLogger.log("Detected ${resultsList.length} segments in results.");
-
-      return resultsList
-          .map((p) => BirdRecord(
-                // 使用时间戳+音频段起始时间作为 ID
-                id: DateTime.now().millisecondsSinceEpoch.toString() +
-                    (p['start_time'] ?? "").toString(),
-                commonName: p['common_name'] ?? "Unknown",
-                scientificName: p['scientific_name'] ?? "",
-                // 你的后端字段名是 'confidence'
-                score: (p['confidence'] ?? 0.0).toDouble(),
-                timestamp: DateTime.now(),
-              ))
-          .toList();
+      return _parseResults(response.data);
     } on DioException catch (de) {
       DebugLogger.log("Dio Error: ${de.type} - ${de.message}");
       rethrow;
@@ -270,6 +263,69 @@ class ApiService {
       DebugLogger.log("Identification Failed: $e");
       rethrow;
     }
+  }
+
+  // Web 版本：使用字节数据
+  Future<List<BirdRecord>> identifyBirdWeb(
+      List<int> bytes, String filename, Function(String) onProgress) async {
+    try {
+      DebugLogger.log("Preparing to upload: $filename (Web)");
+
+      FormData formData = FormData.fromMap({
+        "file": MultipartFile.fromBytes(bytes, filename: filename),
+      });
+
+      onProgress("Uploading...");
+
+      final response = await _dio.post(
+        "$baseUrl/analyze",
+        data: formData,
+        onSendProgress: (sent, total) {
+          if (total > 0) {
+            int progress = ((sent / total) * 100).toInt();
+            onProgress("Uploading: $progress%");
+          }
+        },
+      );
+
+      DebugLogger.log("Server Response Status: ${response.statusCode}");
+      DebugLogger.log("Raw JSON: ${response.data}");
+
+      onProgress("AI Analyzing...");
+
+      return _parseResults(response.data);
+    } on DioException catch (de) {
+      DebugLogger.log("Dio Error: ${de.type} - ${de.message}");
+      rethrow;
+    } catch (e) {
+      DebugLogger.log("Identification Failed: $e");
+      rethrow;
+    }
+  }
+
+  // 共用的结果解析方法
+  List<BirdRecord> _parseResults(dynamic responseData) {
+    // 【核心修正】：针对你的日志结构解析
+    // 1. 获取最外层的 Map
+    final Map<String, dynamic> data =
+        responseData is Map ? Map<String, dynamic>.from(responseData) : {};
+    // 2. 提取 'results' 列表
+    final List resultsList = data['results'] ?? [];
+
+    DebugLogger.log("Detected ${resultsList.length} segments in results.");
+
+    return resultsList
+        .map((p) => BirdRecord(
+              // 使用时间戳+音频段起始时间作为 ID
+              id: DateTime.now().millisecondsSinceEpoch.toString() +
+                  (p['start_time'] ?? "").toString(),
+              commonName: p['common_name'] ?? "Unknown",
+              scientificName: p['scientific_name'] ?? "",
+              // 你的后端字段名是 'confidence'
+              score: (p['confidence'] ?? 0.0).toDouble(),
+              timestamp: DateTime.now(),
+            ))
+        .toList();
   }
 
   Future<void> enrichWithWiki(BirdRecord record) async {
@@ -429,12 +485,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final AudioRecorder _recorder = AudioRecorder();
   // 处理文件上传识别
   Future<void> _handleIdentification() async {
-    if (Platform.isAndroid) {
-      final info = await DeviceInfoPlugin().androidInfo;
-      if (info.version.sdkInt >= 33) {
-        await Permission.audio.request();
-      } else {
-        await Permission.storage.request();
+    // 权限处理：仅在移动端
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        final info = await DeviceInfoPlugin().androidInfo;
+        if (info.version.sdkInt >= 33) {
+          await Permission.audio.request();
+        } else {
+          await Permission.storage.request();
+        }
+      } catch (e) {
+        DebugLogger.log("Permission request failed: $e");
       }
     }
 
@@ -442,17 +503,26 @@ class _HomeScreenState extends State<HomeScreen> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['mp3', 'wav', 'm4a', 'flac', 'ogg'],
+        withData: kIsWeb, // Web 需要读取文件数据
       );
-      if (result == null || result.files.single.path == null) return;
+      if (result == null) return;
 
-      // 拿到路径后，调用统一的分析方法
-      _processAudioFile(result.files.single.path!);
+      // Web 和移动端路径处理不同
+      if (kIsWeb) {
+        if (result.files.single.bytes != null) {
+          _processAudioFileWeb(result.files.single.bytes!, result.files.single.name);
+        }
+      } else {
+        if (result.files.single.path != null) {
+          _processAudioFile(result.files.single.path!);
+        }
+      }
     } catch (e) {
       _error("File selection failed: $e");
     }
   }
 
-  // 真正的核心分析逻辑
+  // 真正的核心分析逻辑 (移动端使用文件路径)
   Future<void> _processAudioFile(String path) async {
     setState(() {
       _isProcessing = true;
@@ -485,6 +555,40 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Web 端使用字节数据
+  Future<void> _processAudioFileWeb(List<int> bytes, String filename) async {
+    setState(() {
+      _isProcessing = true;
+      _statusMessage = "Preparing...";
+    });
+
+    try {
+      final predictions = await _api.identifyBirdWeb(
+        bytes,
+        filename,
+        (msg) => setState(() => _statusMessage = msg),
+      );
+
+      if (predictions.isNotEmpty) {
+        final topMatch = predictions.first;
+        await _api.enrichWithWiki(topMatch);
+        appData.addRecord(topMatch);
+        if (mounted) {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => ResultDetailScreen(record: topMatch)));
+        }
+      } else {
+        if (mounted) _error("AI could not detect any birds in this clip.");
+      }
+    } catch (e) {
+      _error("Analysis Failed: $e");
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
   // 弹出选择菜单
   void _showIdentifyMenu() {
     showModalBottomSheet(
@@ -493,17 +597,19 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(
-            leading: const Icon(Icons.mic, color: Colors.red),
-            title: const Text("现场录音识别"),
-            onTap: () {
-              Navigator.pop(ctx);
-              _startLiveRecord();
-            },
-          ),
+          // 仅在移动端显示录音选项
+          if (!kIsWeb)
+            ListTile(
+              leading: const Icon(Icons.mic, color: Colors.red),
+              title: const Text("Record Audio"),
+              onTap: () {
+                Navigator.pop(ctx);
+                _startLiveRecord();
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.upload_file, color: Colors.blue),
-            title: const Text("上传文件识别"),
+            title: const Text("Upload File"),
             onTap: () {
               Navigator.pop(ctx);
               _handleIdentification();
@@ -515,8 +621,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 录音具体逻辑
+  // 录音具体逻辑 (仅移动端)
   Future<void> _startLiveRecord() async {
+    if (kIsWeb) {
+      _error("Recording is not supported on web. Please upload an audio file.");
+      return;
+    }
+    
     if (await _recorder.hasPermission()) {
       final dir = await getApplicationDocumentsDirectory();
       final path = '${dir.path}/live_rec.m4a';
@@ -526,7 +637,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          title: const Text("正在录音..."),
+          title: const Text("Recording..."),
           content: const LinearProgressIndicator(),
           actions: [
             TextButton(
@@ -538,7 +649,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _processAudioFile(recPath);
                   }
                 },
-                child: const Text("停止并识别")),
+                child: const Text("Stop & Identify")),
           ],
         ),
       );
