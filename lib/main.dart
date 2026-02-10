@@ -976,7 +976,7 @@ class SettingsScreen extends StatelessWidget {
 
   // --- 新增：ID 管理弹窗方法 ---
   void _showIdManagement(BuildContext context) {
-    final TextEditingController _controller = TextEditingController();
+    final TextEditingController controller = TextEditingController();
     
     showDialog(
       context: context,
@@ -995,7 +995,7 @@ class SettingsScreen extends StatelessWidget {
             const Divider(height: 32),
             const Text("To recover data from another device, enter ID below:", style: TextStyle(fontSize: 12)),
             TextField(
-              controller: _controller,
+              controller: controller,
               decoration: const InputDecoration(hintText: "Enter old Sync ID"),
             ),
           ],
@@ -1004,8 +1004,8 @@ class SettingsScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () async {
-              if (_controller.text.isNotEmpty) {
-                await appData.recoverAccount(_controller.text);
+              if (controller.text.isNotEmpty) {
+                await appData.recoverAccount(controller.text);
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Data recovered!")));
               }
