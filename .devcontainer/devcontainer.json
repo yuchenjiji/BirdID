@@ -1,12 +1,31 @@
 {
-	"name": "Flutter",
-	"image": "ghcr.io/mullner/devcontainer-flutter:master",
+	"name": "BirdID Pro Env",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+	"remoteUser": "root", 
+	"features": {
+		"ghcr.io/devcontainers/features/java:1": {
+			"version": "21"
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "25"
+		}
+	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"dart-code.flutter"
+				"dart-code.flutter",
+				"dart-code.dart-code",
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
 			]
 		}
 	},
-	"remoteUser": "vscode"
+	// 这是一个全自动脚本：
+	// 1. 安装基础工具
+	// 2. 安装 npm 版 Copilot
+	// 3. 克隆 Flutter
+	// 4. 自动下载并接受 Android SDK 36 和 编译工具 28.0.3 的协议 (解决你刚才的 doctor 报错)
+	// 5. 安装 Chrome 以备不时之需
+	"postCreateCommand": "apt-get update && apt-get install -y git curl unzip libglu1-mesa && npm install -g @github/copilot && if [ ! -d '/opt/flutter' ]; then git clone https://github.com/flutter/flutter.git -b stable /opt/flutter; fi && echo 'export PATH=$PATH:/opt/flutter/bin' >> /root/.bashrc && /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk 'platforms;android-36' 'build-tools;28.0.3' && yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk --licenses && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && apt install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
+	"forwardPorts": [8080]
 }
