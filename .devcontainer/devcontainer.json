@@ -1,5 +1,5 @@
 {
-	"name": "BirdID Pro Env",
+	"name": "BirdID Final Perfect Env",
 	"image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
 	"remoteUser": "root", 
 	"features": {
@@ -20,12 +20,7 @@
 			]
 		}
 	},
-	// 这是一个全自动脚本：
-	// 1. 安装基础工具
-	// 2. 安装 npm 版 Copilot
-	// 3. 克隆 Flutter
-	// 4. 自动下载并接受 Android SDK 36 和 编译工具 28.0.3 的协议 (解决你刚才的 doctor 报错)
-	// 5. 安装 Chrome 以备不时之需
-	"postCreateCommand": "apt-get update && apt-get install -y git curl unzip libglu1-mesa && npm install -g @github/copilot && if [ ! -d '/opt/flutter' ]; then git clone https://github.com/flutter/flutter.git -b stable /opt/flutter; fi && echo 'export PATH=$PATH:/opt/flutter/bin' >> /root/.bashrc && /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk 'platforms;android-36' 'build-tools;28.0.3' && yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=/opt/android-sdk --licenses && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && apt install -y ./google-chrome-stable_current_amd64.deb && rm google-chrome-stable_current_amd64.deb",
+	// 这是一个从零开始的全自动脚本，确保万无一失
+	"postCreateCommand": "apt-get update && apt-get install -y git curl unzip libglu1-mesa && npm install -g @github/copilot && if [ ! -d '/opt/flutter' ]; then git clone https://github.com/flutter/flutter.git -b stable /opt/flutter; fi && mkdir -p /opt/android-sdk && curl -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && unzip /tmp/cmdline-tools.zip -d /opt/android-sdk/ && mv /opt/android-sdk/cmdline-tools /opt/android-sdk/latest && mv /opt/android-sdk/latest /opt/android-sdk/cmdline-tools && export ANDROID_HOME=/opt/android-sdk && export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools && yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME 'platforms;android-36' 'build-tools;28.0.3' 'platform-tools' && yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses && flutter config --android-sdk /opt/android-sdk && echo 'export ANDROID_HOME=/opt/android-sdk' >> /root/.bashrc && echo 'export PATH=$PATH:/opt/flutter/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools' >> /root/.bashrc",
 	"forwardPorts": [8080]
 }
