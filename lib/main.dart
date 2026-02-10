@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 // ===========================================================================
 // [SECTION] DEBUG LOGGER - 你的“飞行记录仪”
@@ -292,6 +293,34 @@ class ApiService {
   }
 }
 // ===========================================================================
+// [SECTION] THEME PROVIDER - 主题管理
+// ===========================================================================
+
+class ThemeProvider with ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
+
+  ThemeMode get themeMode => _themeMode;
+
+  ThemeProvider() {
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeModeIndex = prefs.getInt('theme_mode') ?? 0;
+    _themeMode = ThemeMode.values[themeModeIndex];
+    notifyListeners();
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('theme_mode', mode.index);
+  }
+}
+
+// ===========================================================================
 // [SECTION] MAIN ENTRY & THEME
 // ===========================================================================
 
@@ -300,7 +329,12 @@ void main() async {
   await appData.init();
   SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
-  runApp(const BirdIdApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const BirdIdApp(),
+    ),
+  );
 }
 
 class BirdIdApp extends StatelessWidget {
@@ -308,30 +342,34 @@ class BirdIdApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) {
-        const seed = Color(0xFF006d38);
-        final light = lightDynamic ?? ColorScheme.fromSeed(seedColor: seed);
-        final dark = darkDynamic ??
-            ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return DynamicColorBuilder(
+          builder: (lightDynamic, darkDynamic) {
+            const seed = Color(0xFF006d38);
+            final light = lightDynamic ?? ColorScheme.fromSeed(seedColor: seed);
+            final dark = darkDynamic ??
+                ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
 
-        return MaterialApp(
-          title: 'Bird ID',
-          themeMode: ThemeMode.system,
-          theme: ThemeData(
-            colorScheme: light,
-            useMaterial3: true,
-            fontFamily: 'Roboto',
-            cardTheme: CardThemeData(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-              clipBehavior: Clip.antiAlias,
-            ),
-          ),
-          darkTheme: ThemeData(colorScheme: dark, useMaterial3: true),
-          home: const MainNavigationWrapper(),
-          debugShowCheckedModeBanner: false,
+            return MaterialApp(
+              title: 'Bird ID',
+              themeMode: themeProvider.themeMode,
+              theme: ThemeData(
+                colorScheme: light,
+                useMaterial3: true,
+                fontFamily: 'Roboto',
+                cardTheme: CardThemeData(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                  clipBehavior: Clip.antiAlias,
+                ),
+              ),
+              darkTheme: ThemeData(colorScheme: dark, useMaterial3: true),
+              home: const MainNavigationWrapper(),
+              debugShowCheckedModeBanner: false,
+            );
+          },
         );
       },
     );
@@ -963,31 +1001,62 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showThemePicker(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
         title: const Text("Choose Theme"),
         children: [
           SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text("Light Mode")),
+            onPressed: () {
+              themeProvider.setThemeMode(ThemeMode.light);
+              Navigator.pop(ctx);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Light Mode"),
+                  if (themeProvider.themeMode == ThemeMode.light)
+                    const Icon(Icons.check, color: Colors.green, size: 20),
+                ],
+              ),
+            ),
           ),
           SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text("Dark Mode")),
+            onPressed: () {
+              themeProvider.setThemeMode(ThemeMode.dark);
+              Navigator.pop(ctx);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Dark Mode"),
+                  if (themeProvider.themeMode == ThemeMode.dark)
+                    const Icon(Icons.check, color: Colors.green, size: 20),
+                ],
+              ),
+            ),
           ),
           SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("System Default"),
-                Icon(Icons.check, color: Colors.green, size: 20),
-              ],
+            onPressed: () {
+              themeProvider.setThemeMode(ThemeMode.system);
+              Navigator.pop(ctx);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("System Default"),
+                  if (themeProvider.themeMode == ThemeMode.system)
+                    const Icon(Icons.check, color: Colors.green, size: 20),
+                ],
+              ),
             ),
           ),
         ],
