@@ -62,3 +62,25 @@ android {
 flutter {
     source = "../.."
 }
+
+// 自动上传 APK 到 Azure Blob Storage
+tasks.register("uploadToAzure", Exec::class) {
+    group = "upload"
+    description = "Upload APK to Azure Blob Storage"
+    
+    val apkDir = file("$buildDir/outputs/flutter-apk")
+    val apkFile = fileTree(apkDir) {
+        include("*.apk")
+    }.singleFile
+    
+    doFirst {
+        println("📤 准备上传: ${apkFile.absolutePath}")
+    }
+    
+    commandLine("bash", "../upload_to_azure.sh", apkFile.absolutePath)
+}
+
+// 构建 release APK 后自动上传
+tasks.named("assembleRelease") {
+    finalizedBy("uploadToAzure")
+}

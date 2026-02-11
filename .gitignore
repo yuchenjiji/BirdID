@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 自动上传脚本（包含敏感信息，不提交）
+# 如果脚本不含敏感信息，可以删除这行以提交脚本
+upload_to_azure.sh
+**/upload_to_azure.sh
+
+# Azure 配置（如果单独存放）
+azure-config.sh
