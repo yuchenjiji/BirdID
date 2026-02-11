@@ -1301,7 +1301,7 @@ class SettingsScreen extends StatelessWidget {
 
   void _downloadApk(BuildContext context) async {
     const String downloadUrl = 
-        "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260211_185347.apk";
+        "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260211_190519.apk";
     
     if (kIsWeb) {
       // 尝试在新标签页打开下载链接
