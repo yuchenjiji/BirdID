@@ -31,10 +31,11 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 3. 匹配你的 Android SDK 36 依赖
-      - name: Install Android SDK Components
+      # 3. 安装 Android SDK 组件
+      - name: Setup Android SDK
         run: |
-          sdkmanager "platforms;android-36" "build-tools;34.0.0" "platform-tools"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;34.0.0" "platform-tools"
 
       # 4. 执行 Flutter 构建
       - name: Build Flutter App
