@@ -32,7 +32,7 @@ flutter build apk
 ### nginx 服务器
 - IP: 134.33.96.248
 - 用户: azureuser  
-- 目录: /var/www/dont_click_me
+- 目录: /var/www/laow_app
 - SSH: ~/.ssh/birdid_deploy_key
 
 ### Azure Blob

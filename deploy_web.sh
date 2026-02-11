@@ -11,7 +11,7 @@ set -e
 VM_IP="134.33.96.248"
 VM_USER="azureuser"
 SSH_KEY="$HOME/.ssh/birdid_deploy_key"
-REMOTE_DIR="/var/www/dont_click_me"
+REMOTE_DIR="/var/www/laow_app"
 LOCAL_BUILD_DIR="build/web"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -49,13 +49,13 @@ rsync -avz --delete \
     "$LOCAL_BUILD_DIR/" \
     "$VM_USER@$VM_IP:/tmp/birdid_web_deploy/"
 
-# Move files with sudo (because /var/www/dont_click_me may need sudo)
+# Move files with sudo (because /var/www/laow_app may need sudo)
 echo "📁 Moving files to web directory..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$VM_USER@$VM_IP" << 'ENDSSH'
-    sudo rm -rf /var/www/dont_click_me/*
-    sudo cp -r /tmp/birdid_web_deploy/* /var/www/dont_click_me/
-    sudo chown -R nginx:nginx /var/www/dont_click_me
-    sudo chmod -R 755 /var/www/dont_click_me
+    sudo rm -rf /var/www/laow_app/*
+    sudo cp -r /tmp/birdid_web_deploy/* /var/www/laow_app/
+    sudo chown -R nginx:nginx /var/www/laow_app
+    sudo chmod -R 755 /var/www/laow_app
     rm -rf /tmp/birdid_web_deploy
 ENDSSH
 
