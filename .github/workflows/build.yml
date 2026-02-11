@@ -17,33 +17,26 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. 匹配你的 Node 25 环境
-      - name: Setup Node.js v25
-        uses: actions/setup-node@v4
-        with:
-          node-version: '25'
-          cache: 'npm'
-
-      # 2. 匹配你的 Java 21 环境 (Flutter/Android 编译必需)
+      # 1. 匹配你的 Java 21 环境 (Flutter/Android 编译必需)
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      # 3. 安装 Flutter (匹配你的 stable 渠道)
+      # 2. 安装 Flutter (匹配你的 stable 渠道)
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      # 4. 匹配你的 Android SDK 36 依赖
+      # 3. 匹配你的 Android SDK 36 依赖
       - name: Install Android SDK Components
         run: |
           sdkmanager "platforms;android-36" "build-tools;34.0.0" "platform-tools"
 
-      # --- 执行 Flutter 构建 ---
+      # 4. 执行 Flutter 构建
       - name: Build Flutter App
         run: |
           flutter pub get
