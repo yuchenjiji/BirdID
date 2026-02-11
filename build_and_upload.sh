@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 配置信息
-AZURE_ACCOUNT="your-storage-account-name"
-AZURE_CONTAINER="apk-builds"
+AZURE_ACCOUNT="laow"
+AZURE_CONTAINER="birdid-apk"
 # 可选：使用 SAS token 或 connection string
 # AZURE_SAS_TOKEN="your-sas-token"
 # AZURE_CONNECTION_STRING="your-connection-string"
@@ -35,13 +35,13 @@ BLOB_NAME="BirdID_${VERSION}_${TIMESTAMP}.apk"
 
 echo -e "${GREEN}📤 上传 APK 到 Azure Blob Storage...${NC}"
 
-# 方式 1: 使用 Azure CLI (需要先 az login)
+# 使用 Azure CLI 上传
 az storage blob upload \
   --account-name "$AZURE_ACCOUNT" \
   --container-name "$AZURE_CONTAINER" \
   --name "$BLOB_NAME" \
   --file "$APK_PATH" \
-  --auth-mode login \
+  --auth-mode key \
   --overwrite
 
 # 方式 2: 使用 Connection String (取消注释以使用)
@@ -71,7 +71,7 @@ if [ $? -eq 0 ]; then
       --permissions r \
       --expiry "$EXPIRY" \
       --https-only \
-      --auth-mode login \
+      --auth-mode key \
       --full-uri
 else
     echo -e "${RED}❌ 上传失败${NC}"

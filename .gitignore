@@ -44,10 +44,92 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# 自动上传脚本（包含敏感信息，不提交）
-# 如果脚本不含敏感信息，可以删除这行以提交脚本
-upload_to_azure.sh
-**/upload_to_azure.sh
+# Android keystore files (NEVER commit these!)
+*.jks
+*.keystore
+key.properties
+android/key.properties
+**/key.properties
 
-# Azure 配置（如果单独存放）
+# Local configuration files
+local.properties
+android/local.properties
+
+# Azure upload scripts (contain account information)
+# 注意: build_and_upload.sh 和 update_apk_url.sh 可以提交（配置已参数化）
+# 但 upload_to_azure.sh 在 android 目录下，可能包含硬编码配置
+**/upload_to_azure.sh
+android/upload_to_azure.sh
+
+# Azure configuration (if stored separately)
 azure-config.sh
+**/azure-config.sh
+
+# APK files (build outputs, should not be committed)
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Gradle files (some should be ignored)
+.gradle
+android/.gradle
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/gradle-wrapper.jar
+android/local.properties
+
+# iOS/macOS files
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/ephemeral/
+
+# Web build outputs (usually regenerated)
+# Uncomment if you don't want to commit web builds
+# /web/build/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary and backup files
+*~
+*.tmp
+*.bak
+*.swp
+*.swo
+.*.swp
+.*.swo
+
+# IDE specific
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/.react/

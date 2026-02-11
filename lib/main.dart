@@ -14,6 +14,7 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ===========================================================================
 // [SECTION] DEBUG LOGGER - 你的“飞行记录仪”
@@ -925,6 +926,18 @@ class SettingsScreen extends StatelessWidget {
                   "Version 1.0.0",
                   onTap: () => _showAboutDialog(context),
                 ),
+                
+                // ✨ 新增板块：DOWNLOAD APK (仅 Web) ✨
+                if (kIsWeb) ...[
+                  _header("DOWNLOAD", colors),
+                  _tile(
+                    context,
+                    Icons.android,
+                    "Download Android App",
+                    "Get the latest APK version",
+                    onTap: () => _showDownloadDialog(context),
+                  ),
+                ],
 
                 // ✨ 新增板块：DATA SYNC ✨
                 _header("DATA SYNC", colors),
@@ -1188,6 +1201,180 @@ class SettingsScreen extends StatelessWidget {
         const SizedBox(height: 10),
         const Text("© 2026 Nature Tech Inc."),
       ],
+    );
+  }
+
+  void _showDownloadDialog(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.android, color: colors.primary),
+            const SizedBox(width: 12),
+            const Text("Download Android App"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Get the native Android experience with:",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            _downloadFeature(Icons.speed, "Better performance"),
+            _downloadFeature(Icons.offline_bolt, "Offline support"),
+            _downloadFeature(Icons.notifications, "Push notifications"),
+            _downloadFeature(Icons.mic, "Native audio recording"),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Latest Version",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "BirdID v1.0.0",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "APK files are hosted on Azure Blob Storage",
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _downloadApk(context);
+            },
+            icon: const Icon(Icons.download),
+            label: const Text("Download APK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _downloadFeature(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.green),
+          const SizedBox(width: 8),
+          Text(text),
+        ],
+      ),
+    );
+  }
+
+  void _downloadApk(BuildContext context) async {
+    const String downloadUrl = 
+        "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260211_172054.apk";
+    
+    if (kIsWeb) {
+      // 尝试在新标签页打开下载链接
+      final Uri url = Uri.parse(downloadUrl);
+      
+      try {
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Download started! Check your browser downloads."),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        } else {
+          // 如果无法打开，显示复制链接对话框
+          if (context.mounted) {
+            _showDownloadLinkDialog(context, downloadUrl);
+          }
+        }
+      } catch (e) {
+        // 出错时显示复制链接对话框
+        if (context.mounted) {
+          _showDownloadLinkDialog(context, downloadUrl);
+        }
+      }
+    }
+  }
+
+  void _showDownloadLinkDialog(BuildContext context, String downloadUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Download Link"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Click the link below to download:"),
+            const SizedBox(height: 12),
+            SelectableText(
+              downloadUrl,
+              style: const TextStyle(
+                color: Colors.blue,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "Or copy and paste this link in your browser.",
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Close"),
+          ),
+          FilledButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: downloadUrl));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Download link copied to clipboard!")),
+              );
+            },
+            child: const Text("Copy Link"),
+          ),
+        ],
+      ),
     );
   }
 
