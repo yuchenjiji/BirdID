@@ -56,8 +56,6 @@ local.properties
 android/local.properties
 
 # Azure upload scripts (contain account information)
-# 注意: build_and_upload.sh 和 update_apk_url.sh 可以提交（配置已参数化）
-# 但 upload_to_azure.sh 在 android 目录下，可能包含硬编码配置
 **/upload_to_azure.sh
 android/upload_to_azure.sh
 
