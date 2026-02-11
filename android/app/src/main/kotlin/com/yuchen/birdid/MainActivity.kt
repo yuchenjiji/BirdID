@@ -1,4 +1,4 @@
-package com.example.myapp
+package com.yuchen.birdid
 
 import io.flutter.embedding.android.FlutterActivity
 
