@@ -136,4 +136,4 @@ DerivedData/
 .vscode/settings.json
 .vscode/launch.json
 .vscode/tasks.json
-.vscode/.react/
+.vscode/.react/deploy_web.sh
