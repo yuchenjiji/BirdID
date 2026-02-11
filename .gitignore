@@ -61,6 +61,12 @@ android/local.properties
 **/upload_to_azure.sh
 android/upload_to_azure.sh
 
+# 构建和部署脚本（个人使用，不需要提交）
+build_and_upload.sh
+update_apk_url.sh
+build_all.sh
+git-safety-check.sh
+
 # Azure configuration (if stored separately)
 azure-config.sh
 **/azure-config.sh
