@@ -172,10 +172,10 @@ final appData = BirdAppData();
 // [SECTION] APPWRITE SERVICE - APK 下载链接管理
 // ===========================================================================
 class AppwriteService {
-  // TODO: 替换为你的 Appwrite 配置
+  // Appwrite 配置
   static const String endpoint = "https://cloud.appwrite.io/v1";
-  static const String projectId = "YOUR_PROJECT_ID"; // 替换为你的 Project ID
-  static const String functionId = "YOUR_FUNCTION_ID"; // 替换为你的 Function ID
+  static const String projectId = "6952933000307ad6e90f";
+  static const String functionId = "698d3296001d5275bcca";
   
   /// 获取最新 APK 下载链接
   static Future<Map<String, dynamic>?> getLatestApkUrl() async {
