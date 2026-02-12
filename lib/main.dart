@@ -898,13 +898,6 @@ class SettingsScreen extends StatelessWidget {
                 _header("GENERAL", colors),
                 _tile(
                   context,
-                  Icons.graphic_eq,
-                  "Audio Quality",
-                  "High (320kbps)",
-                  onTap: () => _showAudioQualityPicker(context),
-                ),
-                _tile(
-                  context,
                   Icons.history,
                   "Identification History",
                   "Clear all recorded data",
@@ -1091,39 +1084,6 @@ class SettingsScreen extends StatelessWidget {
 
   // --- 交互逻辑 (修复了图标报错) ---
 
-  void _showAudioQualityPicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const ListTile(
-              title: Text("Select Audio Quality",
-                  style: TextStyle(fontWeight: FontWeight.bold))),
-          ListTile(
-            leading: const Icon(Icons.sd_storage), // 修复
-            title: const Text("Standard (128kbps)"),
-            onTap: () => Navigator.pop(ctx),
-          ),
-          ListTile(
-            leading: const Icon(Icons.hd), // 修复
-            title: const Text("High (320kbps)"),
-            trailing: const Icon(Icons.check, color: Colors.green),
-            onTap: () => Navigator.pop(ctx),
-          ),
-          ListTile(
-            leading: const Icon(Icons.surround_sound), // 修复：用了这个存在的图标
-            title: const Text("Lossless (FLAC)"),
-            subtitle: const Text("Best for AI analysis"),
-            onTap: () => Navigator.pop(ctx),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
   void _showThemePicker(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     
@@ -1301,7 +1261,7 @@ class SettingsScreen extends StatelessWidget {
 
   void _downloadApk(BuildContext context) async {
     const String downloadUrl = 
-        "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260211_200333.apk";
+        "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260212_012811.apk";
     
     if (kIsWeb) {
       // 尝试在新标签页打开下载链接
