@@ -265,7 +265,7 @@ class AppwriteService {
     
     // 失败时返回备用链接（旧的硬编码链接）
     debugPrint('⚠️ Appwrite failed, using fallback URL');
-    return "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260212_022232.apk";
+    return "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260212_024122.apk";
   }
 }
 
