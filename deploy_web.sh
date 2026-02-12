@@ -37,11 +37,6 @@ echo "   Source: $LOCAL_BUILD_DIR"
 echo "   Target: $VM_USER@$VM_IP:$REMOTE_DIR"
 echo ""
 
-# Backup existing deployment (on remote server)
-echo "💾 Creating backup on server..."
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$VM_USER@$VM_IP" \
-    "sudo cp -r $REMOTE_DIR ${REMOTE_DIR}_backup_\$(date +%Y%m%d_%H%M%S) 2>/dev/null || true"
-
 # Deploy using rsync (efficient, only transfers changed files)
 echo "🚀 Deploying files..."
 rsync -avz --delete \
@@ -66,6 +61,4 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "🌍 Your site should be live at:"
 echo "   http://$VM_IP"
-echo ""
-echo "💡 Backup saved on server: ${REMOTE_DIR}_backup_*"
 echo ""
