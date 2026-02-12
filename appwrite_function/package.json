@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Appwrite Cloud Function to get latest BirdID APK from Azure Blob Storage",
   "main": "src/main.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"No tests yet\""
   },

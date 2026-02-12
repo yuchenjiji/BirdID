@@ -173,7 +173,7 @@ final appData = BirdAppData();
 // ===========================================================================
 class AppwriteService {
   // Appwrite 配置
-  static const String endpoint = "https://cloud.appwrite.io/v1";
+  static const String endpoint = "https://nyc.cloud.appwrite.io/v1";
   static const String projectId = "6952933000307ad6e90f";
   static const String functionId = "698d3296001d5275bcca";
   
