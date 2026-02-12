@@ -69,6 +69,11 @@ git-safety-check.sh
 azure-config.sh
 **/azure-config.sh
 
+# Appwrite Function build artifacts
+appwrite_function/node_modules/
+appwrite_function/function.tar.gz
+appwrite_function/package-lock.json
+
 # APK files (build outputs, should not be committed)
 *.apk
 *.aab

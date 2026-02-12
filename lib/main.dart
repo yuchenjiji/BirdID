@@ -15,6 +15,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 // ===========================================================================
 // [SECTION] DEBUG LOGGER - 你的“飞行记录仪”
@@ -166,6 +167,102 @@ class BirdAppData extends ChangeNotifier {
 }
 
 final appData = BirdAppData();
+
+// ===========================================================================
+// [SECTION] APPWRITE SERVICE - APK 下载链接管理
+// ===========================================================================
+class AppwriteService {
+  // TODO: 替换为你的 Appwrite 配置
+  static const String endpoint = "https://cloud.appwrite.io/v1";
+  static const String projectId = "YOUR_PROJECT_ID"; // 替换为你的 Project ID
+  static const String functionId = "YOUR_FUNCTION_ID"; // 替换为你的 Function ID
+  
+  /// 获取最新 APK 下载链接
+  static Future<Map<String, dynamic>?> getLatestApkUrl() async {
+    try {
+      final url = Uri.parse('$endpoint/functions/$functionId/executions');
+      
+      final response = await http.post(
+        url,
+        headers: {
+          'X-Appwrite-Project': projectId,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Appwrite function 执行是异步的，需要等待完成
+        final executionId = data['\$id'];
+        
+        // 轮询获取执行结果（最多等待10秒）
+        for (int i = 0; i < 20; i++) {
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          final resultUrl = Uri.parse('$endpoint/functions/$functionId/executions/$executionId');
+          final resultResponse = await http.get(
+            resultUrl,
+            headers: {'X-Appwrite-Project': projectId},
+          );
+          
+          if (resultResponse.statusCode == 200) {
+            final resultData = jsonDecode(resultResponse.body);
+            
+            if (resultData['status'] == 'completed') {
+              final responseBody = jsonDecode(resultData['responseBody']);
+              
+              if (responseBody['success'] == true) {
+                return responseBody['data'];
+              } else {
+                debugPrint('Appwrite function error: ${responseBody['error']}');
+                return null;
+              }
+            } else if (resultData['status'] == 'failed') {
+              debugPrint('Appwrite function execution failed');
+              return null;
+            }
+          }
+        }
+        
+        debugPrint('Appwrite function execution timeout');
+        return null;
+      } else {
+        debugPrint('Failed to trigger Appwrite function: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error fetching APK URL from Appwrite: $e');
+      return null;
+    }
+  }
+  
+  /// 带缓存的获取APK链接（避免频繁请求）
+  static String? _cachedUrl;
+  static DateTime? _cacheTime;
+  static const Duration _cacheDuration = Duration(minutes: 5);
+  
+  static Future<String?> getLatestApkUrlCached() async {
+    // 检查缓存是否有效
+    if (_cachedUrl != null && 
+        _cacheTime != null && 
+        DateTime.now().difference(_cacheTime!) < _cacheDuration) {
+      return _cachedUrl;
+    }
+    
+    // 从 Appwrite 获取
+    final result = await getLatestApkUrl();
+    if (result != null && result['downloadUrl'] != null) {
+      _cachedUrl = result['downloadUrl'];
+      _cacheTime = DateTime.now();
+      return _cachedUrl;
+    }
+    
+    // 失败时返回备用链接（旧的硬编码链接）
+    return "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260212_012811.apk";
+  }
+}
+
 // ===========================================================================
 // [SECTION] AZURE SERVICE - 专门负责微软云同步
 // ===========================================================================
@@ -1260,8 +1357,30 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _downloadApk(BuildContext context) async {
-    const String downloadUrl = 
-        "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260212_012811.apk";
+    // 显示加载状态
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Fetching latest APK link..."),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+    
+    // 从 Appwrite 获取最新下载链接
+    final downloadUrl = await AppwriteService.getLatestApkUrlCached();
+    
+    if (downloadUrl == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Failed to fetch download link. Please try again."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
     
     if (kIsWeb) {
       // 尝试在新标签页打开下载链接
