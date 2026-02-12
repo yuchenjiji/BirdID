@@ -247,19 +247,25 @@ class AppwriteService {
     if (_cachedUrl != null && 
         _cacheTime != null && 
         DateTime.now().difference(_cacheTime!) < _cacheDuration) {
+      debugPrint('📦 Using cached APK URL: $_cachedUrl');
       return _cachedUrl;
     }
     
     // 从 Appwrite 获取
+    debugPrint('🔍 Fetching latest APK URL from Appwrite...');
     final result = await getLatestApkUrl();
     if (result != null && result['downloadUrl'] != null) {
       _cachedUrl = result['downloadUrl'];
       _cacheTime = DateTime.now();
+      debugPrint('✅ Got APK URL from Appwrite: $_cachedUrl');
+      debugPrint('   File: ${result['fileName']}');
+      debugPrint('   Size: ${result['size']} bytes');
       return _cachedUrl;
     }
     
     // 失败时返回备用链接（旧的硬编码链接）
-    return "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260212_012811.apk";
+    debugPrint('⚠️ Appwrite failed, using fallback URL');
+    return "https://laow.blob.core.windows.net/birdid-apk/BirdID_1.0.0+1_20260212_022232.apk";
   }
 }
 
