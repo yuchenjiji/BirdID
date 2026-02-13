@@ -11,6 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+node_modules/
 
 # IntelliJ related
 *.iml
@@ -142,3 +143,18 @@ DerivedData/
 .vscode/launch.json
 .vscode/tasks.json
 .vscode/.react/deploy_web.sh
+
+cloudflare_worker
+
+package-lock.json
+package.json
+APK_DOWNLOAD_GUIDE.md
+APK_DOWNLOAD_IMPLEMENTATION.md
+APPWRITE_QUICKSTART.md
+APPWRITE_SETUP.md
+DEPLOYMENT_READY.md
+DYNAMIC_APK_IMPLEMENTATION.md
+GEMINI.md
+GIT_SAFETY_SUMMARY.md
+HOW_TO_USE.md
+QUICK_START.md

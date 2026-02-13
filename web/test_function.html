@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Appwrite Function</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #5865F2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #4752C4;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🧪 测试 Appwrite Function</h1>
+        <p>点击按钮测试获取最新 APK 链接</p>
+        <button onclick="testFunction()">🚀 测试 Function</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testFunction() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'loading';
+            resultDiv.textContent = '⏳ 正在调用 Appwrite Function...';
+
+            try {
+                const response = await fetch('https://nyc.cloud.appwrite.io/v1/functions/111111/executions', {
+                    method: 'POST',
+                    headers: {
+                        'X-Appwrite-Project': '6952933000307ad6e90f',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const execId = data.$id;
+                    resultDiv.textContent = `✅ 执行已创建: ${execId}\n\n等待执行完成...`;
+
+                    // 轮询获取结果
+                    let attempts = 0;
+                    const maxAttempts = 30;
+                    
+                    const checkResult = setInterval(async () => {
+                        attempts++;
+                        
+                        const execResponse = await fetch(
+                            `https://nyc.cloud.appwrite.io/v1/functions/111111/executions/${execId}`,
+                            {
+                                headers: {
+                                    'X-Appwrite-Project': '6952933000307ad6e90f'
+                                }
+                            }
+                        );
+                        
+                        const execData = await execResponse.json();
+                        
+                        if (execData.status === 'completed') {
+                            clearInterval(checkResult);
+                            
+                            try {
+                                const result = JSON.parse(execData.responseBody);
+                                
+                                if (result.success) {
+                                    resultDiv.className = 'success';
+                                    resultDiv.textContent = `🎉 成功！\n\n` +
+                                        `文件名: ${result.data.fileName}\n` +
+                                        `下载链接: ${result.data.downloadUrl}\n` +
+                                        `文件大小: ${result.data.size} bytes\n` +
+                                        `最后修改: ${result.data.lastModified}`;
+                                } else {
+                                    resultDiv.className = 'error';
+                                    resultDiv.textContent = `❌ Function 返回错误:\n\n${result.error}`;
+                                }
+                            } catch (e) {
+                                resultDiv.className = 'error';
+                                resultDiv.textContent = `❌ 解析响应失败:\n\n${execData.responseBody}`;
+                            }
+                            
+                        } else if (execData.status === 'failed') {
+                            clearInterval(checkResult);
+                            resultDiv.className = 'error';
+                            resultDiv.textContent = `❌ 执行失败:\n\n` +
+                                `Response Code: ${execData.responseStatusCode}\n` +
+                                `Response: ${execData.responseBody}\n` +
+                                `Errors: ${execData.errors}`;
+                        } else if (attempts >= maxAttempts) {
+                            clearInterval(checkResult);
+                            resultDiv.className = 'error';
+                            resultDiv.textContent = `⏱️ 超时 - 执行超过 ${maxAttempts} 秒`;
+                        }
+                    }, 1000);
+                    
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = `❌ 创建执行失败:\n\n${JSON.stringify(data, null, 2)}`;
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = `❌ 网络错误:\n\n${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
