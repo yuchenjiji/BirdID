@@ -469,13 +469,13 @@ class BirdIdApp extends StatelessWidget {
         return DynamicColorBuilder(
           builder: (lightDynamic, darkDynamic) {
             const seed = Color(0xFF006d38);
+            
+            // 完全使用动态取色，让Material 3自动处理所有颜色
             final light = lightDynamic ?? ColorScheme.fromSeed(seedColor: seed);
-            final dark = darkDynamic ??
-                ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark).copyWith(
-                  surfaceContainerLow: const Color(0xFF2B2B2B),
-                  surfaceContainer: const Color(0xFF363636),
-                  surfaceContainerHigh: const Color(0xFF414141),
-                );
+            final dark = darkDynamic ?? ColorScheme.fromSeed(
+              seedColor: seed, 
+              brightness: Brightness.dark,
+            );
 
             return MaterialApp(
               title: 'Bird ID',
@@ -495,9 +495,9 @@ class BirdIdApp extends StatelessWidget {
                 colorScheme: dark, 
                 useMaterial3: true,
                 cardTheme: CardThemeData(
-                  elevation: 0,
+                  elevation: 1,  // 添加微妙的阴影增加层次
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24)),
+                      borderRadius: BorderRadius.circular(16)),
                   clipBehavior: Clip.antiAlias,
                 ),
               ),
@@ -805,7 +805,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final colors = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: colors.surfaceContainerLow,
+      color: colors.surfaceContainerHigh,  // 使用更高层级的surface
+      elevation: 1,  // 添加微妙阴影
       child: ListTile(
         onTap: () => Navigator.push(
             context,
@@ -1118,8 +1119,8 @@ class SettingsScreen extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: colors.surfaceContainerLow,
-      elevation: 0,
+      color: colors.surfaceContainerHigh,  // 使用更高层级的surface，对比度更好
+      elevation: 1,  // 添加微妙阴影
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -1132,7 +1133,7 @@ class SettingsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   // 修复：使用 withValues 替代 withOpacity (适配新版Flutter)
-                  color: colors.primary.withValues(alpha: 0.1),
+                  color: colors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(i, color: colors.primary, size: 24),
