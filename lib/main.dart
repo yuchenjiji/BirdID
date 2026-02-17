@@ -471,7 +471,11 @@ class BirdIdApp extends StatelessWidget {
             const seed = Color(0xFF006d38);
             final light = lightDynamic ?? ColorScheme.fromSeed(seedColor: seed);
             final dark = darkDynamic ??
-                ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
+                ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark).copyWith(
+                  surfaceContainerLow: const Color(0xFF2B2B2B),
+                  surfaceContainer: const Color(0xFF363636),
+                  surfaceContainerHigh: const Color(0xFF414141),
+                );
 
             return MaterialApp(
               title: 'Bird ID',
@@ -487,7 +491,16 @@ class BirdIdApp extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                 ),
               ),
-              darkTheme: ThemeData(colorScheme: dark, useMaterial3: true),
+              darkTheme: ThemeData(
+                colorScheme: dark, 
+                useMaterial3: true,
+                cardTheme: CardThemeData(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                  clipBehavior: Clip.antiAlias,
+                ),
+              ),
               home: const MainNavigationWrapper(),
               debugShowCheckedModeBanner: false,
             );
