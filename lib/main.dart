@@ -169,70 +169,32 @@ class BirdAppData extends ChangeNotifier {
 final appData = BirdAppData();
 
 // ===========================================================================
-// [SECTION] APPWRITE SERVICE - APK 下载链接管理
 // ===========================================================================
-class AppwriteService {
-  // Appwrite 配置
-  static const String endpoint = "https://nyc.cloud.appwrite.io/v1";
-  static const String projectId = "6952933000307ad6e90f";
-  static const String functionId = "111111";
+// [SECTION] CLOUDFLARE WORKER SERVICE - APK 下载链接管理
+// ===========================================================================
+class CloudflareWorkerService {
+  static const String workerUrl = "https://cdn.dont-click.me";
   
   /// 获取最新 APK 下载链接
   static Future<Map<String, dynamic>?> getLatestApkUrl() async {
     try {
-      final url = Uri.parse('$endpoint/functions/$functionId/executions');
-      
-      final response = await http.post(
-        url,
-        headers: {
-          'X-Appwrite-Project': projectId,
-          'Content-Type': 'application/json',
-        },
-      );
+      final response = await http.get(Uri.parse(workerUrl));
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
-        // Appwrite function 执行是异步的，需要等待完成
-        final executionId = data['\$id'];
-        
-        // 轮询获取执行结果（最多等待10秒）
-        for (int i = 0; i < 20; i++) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          
-          final resultUrl = Uri.parse('$endpoint/functions/$functionId/executions/$executionId');
-          final resultResponse = await http.get(
-            resultUrl,
-            headers: {'X-Appwrite-Project': projectId},
-          );
-          
-          if (resultResponse.statusCode == 200) {
-            final resultData = jsonDecode(resultResponse.body);
-            
-            if (resultData['status'] == 'completed') {
-              final responseBody = jsonDecode(resultData['responseBody']);
-              
-              if (responseBody['success'] == true) {
-                return responseBody['data'];
-              } else {
-                debugPrint('Appwrite function error: ${responseBody['error']}');
-                return null;
-              }
-            } else if (resultData['status'] == 'failed') {
-              debugPrint('Appwrite function execution failed');
-              return null;
-            }
-          }
+        if (data['success'] == true) {
+          return data['data'];
+        } else {
+          debugPrint('Cloudflare Worker error: ${data['error']}');
+          return null;
         }
-        
-        debugPrint('Appwrite function execution timeout');
-        return null;
       } else {
-        debugPrint('Failed to trigger Appwrite function: ${response.statusCode}');
+        debugPrint('Cloudflare Worker returned ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      debugPrint('Error fetching APK URL from Appwrite: $e');
+      debugPrint('Error fetching APK URL from Cloudflare Worker: $e');
       return null;
     }
   }
@@ -1374,7 +1336,7 @@ class SettingsScreen extends StatelessWidget {
     }
     
     // 从 Appwrite 获取最新下载链接
-    final downloadUrl = await AppwriteService.getLatestApkUrlCached();
+    final downloadUrl = await CloudflareWorkerService.getLatestApkUrlCached();
     
     if (downloadUrl == null) {
       if (context.mounted) {
