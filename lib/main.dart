@@ -146,14 +146,14 @@ class BirdAppData extends ChangeNotifier {
   void addRecord(BirdRecord r) {
     _history.insert(0, r);
     _saveLocal();
-    AzureService().syncHistoryToCloud(_uid!, _history);
+    if (_uid != null) AzureService().addRecordToCloud(_uid!, r);
     notifyListeners();
   }
 
   void clearHistory() {
     _history.clear();
     _saveLocal();
-    AzureService().syncHistoryToCloud(_uid!, _history);
+    if (_uid != null) AzureService().clearHistoryInCloud(_uid!);
     notifyListeners();
   }
 }
@@ -201,33 +201,52 @@ class CloudflareWorkerService {
 }
 
 class AzureService {
-  static const String baseUrl = "https://oldweng-birdnet.hf.space";
+  // 替换为你的 Azure VM 公网 IP 或域名，端口默认 8000
+  static const String baseUrl = "http://134.33.96.248:8000";
+
   final Dio _dio = Dio();
 
-  Future<void> syncHistoryToCloud(String uid, List<BirdRecord> history) async {
+  /// 新增单条记录到 PostgreSQL
+  Future<void> addRecordToCloud(String uid, BirdRecord record) async {
     try {
-      final urlRes = await _dio.get("$baseUrl/generate_history_url",
-          queryParameters: {"user_id": uid, "mode": "w"});
-      final uploadUrl = urlRes.data['url'];
-      final body = jsonEncode(history.map((e) => e.toJson()).toList());
-      await _dio.put(uploadUrl,
-          data: body,
-          options: Options(headers: {"x-ms-blob-type": "BlockBlob"}));
-      DebugLogger.log("Azure Sync: Success");
+      final body = record.toJson()..['uid'] = uid;
+      await _dio.post(
+        "$baseUrl/history",
+        data: jsonEncode(body),
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      DebugLogger.log("Cloud Sync: record added");
     } catch (e) {
-      DebugLogger.log("Azure Sync Failed: $e");
+      DebugLogger.log("Cloud addRecord Failed: $e");
     }
   }
 
+  /// 清除该用户在云端的所有记录
+  Future<void> clearHistoryInCloud(String uid) async {
+    try {
+      await _dio.delete("$baseUrl/history", queryParameters: {"uid": uid});
+      DebugLogger.log("Cloud Sync: history cleared");
+    } catch (e) {
+      DebugLogger.log("Cloud clearHistory Failed: $e");
+    }
+  }
+
+  /// 拉取该用户所有记录
   Future<List<BirdRecord>> fetchHistoryFromCloud(String uid) async {
     try {
-      final urlRes = await _dio.get("$baseUrl/generate_history_url",
-          queryParameters: {"user_id": uid, "mode": "r"});
-      final res = await _dio.get(urlRes.data['url']);
+      final res = await _dio.get("$baseUrl/history", queryParameters: {"uid": uid});
       final List raw = res.data is String ? jsonDecode(res.data) : res.data;
       return raw.map((e) => BirdRecord.fromJson(e)).toList();
     } catch (_) {
       return [];
+    }
+  }
+
+  // 全量同步（清空后逐条插入，用于数据迁移等场景）
+  Future<void> syncHistoryToCloud(String uid, List<BirdRecord> history) async {
+    await clearHistoryInCloud(uid);
+    for (final r in history) {
+      await addRecordToCloud(uid, r);
     }
   }
 }
@@ -1167,4 +1186,5 @@ void _showLogs(BuildContext context) {
       ),
     ),
   );
+
 }
