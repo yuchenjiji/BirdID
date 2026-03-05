@@ -202,7 +202,7 @@ class CloudflareWorkerService {
 
 class AzureService {
   // 替换为你的 Azure VM 公网 IP 或域名，端口默认 8000
-  static const String baseUrl = "http://134.33.96.248:8000";
+  static const String baseUrl = "https://api.laow.dev";
 
   final Dio _dio = Dio();
 
