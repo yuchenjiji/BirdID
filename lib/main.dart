@@ -1125,9 +1125,17 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _downloadApk(BuildContext context) async {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text("Fetching download link...")));
     final downloadUrl = await CloudflareWorkerService.getLatestApkUrlCached();
     if (downloadUrl != null) {
-      launchUrl(Uri.parse(downloadUrl), mode: LaunchMode.externalApplication);
+      launchUrl(Uri.parse(downloadUrl), mode: LaunchMode.platformDefault);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to get download link. Try again.")));
+      }
     }
   }
 
