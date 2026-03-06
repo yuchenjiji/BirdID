@@ -408,40 +408,57 @@ class BirdIdApp extends StatelessWidget {
             final dark = darkDynamic?.harmonized() ?? darkBase;
 
             ThemeData buildTheme(ColorScheme scheme) {
+              final isDark = scheme.brightness == Brightness.dark;
               return ThemeData(
                 useMaterial3: true,
                 colorScheme: scheme,
+                // 强制背景更深，营造高级感
+                scaffoldBackgroundColor: isDark ? const Color(0xFF121212) : scheme.surface,
                 textTheme: GoogleFonts.interTextTheme().copyWith(
-                  displayLarge: GoogleFonts.lexend(fontWeight: FontWeight.bold),
-                  displayMedium:
-                      GoogleFonts.lexend(fontWeight: FontWeight.bold),
-                  displaySmall: GoogleFonts.lexend(fontWeight: FontWeight.bold),
-                  headlineLarge:
-                      GoogleFonts.lexend(fontWeight: FontWeight.w600),
-                  headlineMedium:
-                      GoogleFonts.lexend(fontWeight: FontWeight.w600),
-                  titleLarge: GoogleFonts.lexend(
-                      fontWeight: FontWeight.w600, fontSize: 22),
+                  displayLarge: GoogleFonts.lexend(fontWeight: FontWeight.w700, letterSpacing: -1),
+                  displayMedium: GoogleFonts.lexend(fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                  displaySmall: GoogleFonts.lexend(fontWeight: FontWeight.w700),
+                  headlineLarge: GoogleFonts.lexend(fontWeight: FontWeight.w600),
+                  headlineMedium: GoogleFonts.lexend(fontWeight: FontWeight.w600),
+                  titleLarge: GoogleFonts.lexend(fontWeight: FontWeight.w600, fontSize: 20),
                 ),
                 cardTheme: CardThemeData(
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   clipBehavior: Clip.antiAlias,
-                  color: scheme.surfaceContainerLow,
+                  // 让卡片在深色模式下稍微明亮一点，拉开层次
+                  color: isDark ? const Color(0xFF1E1E1E) : scheme.surfaceContainerLow,
                 ),
                 navigationBarTheme: NavigationBarThemeData(
-                  labelTextStyle: WidgetStateProperty.all(
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
+                  backgroundColor: isDark ? const Color(0xFF121212) : scheme.surface,
+                  indicatorColor: scheme.primaryContainer,
+                  labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: scheme.primary);
+                    }
+                    return TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: scheme.onSurfaceVariant);
+                  }),
+                  iconTheme: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return IconThemeData(color: scheme.onPrimaryContainer);
+                    }
+                    return IconThemeData(color: scheme.onSurfaceVariant);
+                  }),
                 ),
                 appBarTheme: AppBarTheme(
                   centerTitle: false,
+                  backgroundColor: Colors.transparent,
                   scrolledUnderElevation: 0,
                   titleTextStyle: GoogleFonts.lexend(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                     color: scheme.onSurface,
                   ),
+                ),
+                floatingActionButtonTheme: FloatingActionButtonThemeData(
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
               );
             }
@@ -997,22 +1014,67 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTile(
-      BuildContext context, IconData icon, String title, String subtitle,
+  Widget _buildTile(BuildContext context, IconData icon, String title,
+      String subtitle,
       {VoidCallback? onTap, bool isDestructive = false}) {
     final colors = Theme.of(context).colorScheme;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: onTap,
-        leading:
-            Icon(icon, color: isDestructive ? colors.error : colors.primary),
-        title: Text(title,
-            style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDestructive ? colors.error : null)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 13)),
-        trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Card(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDestructive
+                        ? colors.errorContainer
+                        : colors.primaryContainer.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 22,
+                    color: isDestructive ? colors.error : colors.primary,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: isDestructive ? colors.error : null,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.onSurfaceVariant.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1116,27 +1178,79 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-          FilledButton(
-              onPressed: () => _downloadApk(context),
-              child: const Text("Download APK")),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _downloadApk(context);
+            },
+            icon: const Icon(Icons.download_rounded),
+            label: const Text("Download APK"),
+          ),
         ],
       ),
     );
   }
 
   void _downloadApk(BuildContext context) async {
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Fetching download link...")));
+    // 1. Initial feedback
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Fetching download link...")));
+
     final downloadUrl = await CloudflareWorkerService.getLatestApkUrlCached();
+
     if (downloadUrl != null) {
-      launchUrl(Uri.parse(downloadUrl), mode: LaunchMode.platformDefault);
+      final url = Uri.parse(downloadUrl);
+      try {
+        final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+        if (!launched && context.mounted) {
+          _showDownloadLinkDialog(context, downloadUrl);
+        }
+      } catch (e) {
+        if (context.mounted) _showDownloadLinkDialog(context, downloadUrl);
+      }
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Failed to get download link. Try again.")));
       }
     }
+  }
+
+  void _showDownloadLinkDialog(BuildContext context, String downloadUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Download Link"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+                "Automatic download was blocked by the browser. Please use the link below:"),
+            const SizedBox(height: 16),
+            SelectableText(
+              downloadUrl,
+              style: const TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("Close")),
+          FilledButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: downloadUrl));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Link copied to clipboard!")));
+            },
+            child: const Text("Copy Link"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _askClear(BuildContext context) {
